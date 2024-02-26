@@ -1,3 +1,4 @@
+# fmt: off
 import functools
 import trimesh
 import numpy as np

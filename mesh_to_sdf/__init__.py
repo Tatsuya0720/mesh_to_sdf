@@ -1,3 +1,4 @@
+# fmt: off
 import numpy as np
 from . import surface_point_cloud
 from .surface_point_cloud import BadMeshException
@@ -59,3 +60,15 @@ def sample_sdf_near_surface(mesh, number_of_points = 500000, surface_point_metho
     surface_point_cloud = get_surface_point_cloud(mesh, surface_point_method, 1, scan_count, scan_resolution, sample_point_count, calculate_normals=sign_method=='normal' or return_gradients)
 
     return surface_point_cloud.sample_sdf_near_surface(number_of_points, surface_point_method=='scan', sign_method, normal_sample_count, min_size, return_gradients)
+
+
+def sample_sdf_voxel(mesh, N=256, surface_point_method='scan', sign_method='normal', scan_count=100, scan_resolution=400, sample_point_count=10000000, normal_sample_count=11, min_size=0, return_gradients=False):
+    mesh = scale_to_unit_sphere(mesh)
+    
+    if surface_point_method == 'sample' and sign_method == 'depth':
+        print("Incompatible methods for sampling points and determining sign, using sign_method='normal' instead.")
+        sign_method = 'normal'
+
+    surface_point_cloud = get_surface_point_cloud(mesh, surface_point_method, 1, scan_count, scan_resolution, sample_point_count, calculate_normals=sign_method=='normal' or return_gradients)
+
+    return surface_point_cloud.sample_voxel_point(N, surface_point_method=='scan', sign_method, normal_sample_count, min_size, return_gradients)

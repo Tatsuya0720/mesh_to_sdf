@@ -1,6 +1,8 @@
-from .scan import Scan, get_camera_transform_looking_at_origin
-from .utils import sample_uniform_points_in_unit_sphere
-from .utils import get_raster_points, check_voxels
+# fmt: off
+import sys
+from scan import Scan, get_camera_transform_looking_at_origin
+from utils import sample_uniform_points_in_unit_sphere
+from utils import get_raster_points, check_voxels
 
 import trimesh
 import logging
@@ -33,7 +35,7 @@ class SurfacePointCloud:
         if use_depth_buffer:
             distances, indices = self.kd_tree.query(query_points)
             distances = distances.astype(np.float32).reshape(-1)
-            inside = ~self.is_outside(query_points)
+            #inside = ~self.is_outside(query_points) # 単位球に制限されるのを回避するため
             distances[inside] *= -1
 
             if return_gradients:
@@ -127,6 +129,35 @@ class SurfacePointCloud:
             model_size = np.count_nonzero(sdf[-unit_sphere_sample_count:] < 0) / unit_sphere_sample_count
             if model_size < min_size:
                 raise BadMeshException()
+
+        if return_gradients:
+            return query_points, sdf, gradients
+        else:
+            return query_points, sdf
+        
+    def sample_voxel_point(self, N=256, use_scans=True, sign_method='normal', normal_sample_count=11, min_size=0, return_gradients=False):
+        query_points = []
+
+        # 3次元グリッドの座標を(N*3, 3)の行列に格納
+        grid = np.mgrid[0:N, 0:N, 0:N].reshape(3, -1).T / N
+        grid = grid + 1 / (2 * N)
+        grid = grid * 2 - 1
+
+        query_points.append(grid)
+        query_points = np.concatenate(query_points).astype(np.float32)
+
+        if sign_method == 'normal':
+            sdf = self.get_sdf_in_batches(query_points, use_depth_buffer=False, sample_count=normal_sample_count, return_gradients=return_gradients)
+        elif sign_method == 'depth':
+            sdf = self.get_sdf_in_batches(query_points, use_depth_buffer=True, return_gradients=return_gradients)
+        else:
+            raise ValueError('Unknown sign determination method: {:s}'.format(sign_method))
+        if return_gradients:
+            sdf, gradients = sdf
+
+        # query_pointsとsdfをgridの形にreshape
+        query_points = query_points.reshape((N, N, N, 3))
+        sdf = sdf.reshape((N, N, N))
 
         if return_gradients:
             return query_points, sdf, gradients

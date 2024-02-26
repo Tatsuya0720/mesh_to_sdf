@@ -1,5 +1,6 @@
+# fmt: off
 import numpy as np
-from .pyrender_wrapper import render_normal_and_depth_buffers
+from pyrender_wrapper import render_normal_and_depth_buffers
 import pyrender
 from scipy.spatial.transform import Rotation
 from skimage import io

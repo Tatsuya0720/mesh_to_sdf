@@ -1,3 +1,4 @@
+# fmt: off
 ### Wrapper around the pyrender library that allows to
 ### 1. disable antialiasing
 ### 2. render a normal buffer
