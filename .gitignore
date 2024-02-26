@@ -5,6 +5,5 @@ build/**
 dist/**
 test/
 
-*.obj
 *.stl
 *.ply
